@@ -1,1 +1,1 @@
-Download the dataset and place the files in directories.
+Download the dataset and place the files here.
