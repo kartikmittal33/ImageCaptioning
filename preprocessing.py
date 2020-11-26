@@ -12,11 +12,11 @@ IZ = 3
 INPUT_SHAPE = (IH, IW, IZ)
 
 def load_image(path):
-    img = image.load_img(path, target_size=(IH,IW))
-    x = image.img_to_array(img)
-    x = np.expand_dims(x, axis=0)
-    x = preprocess_input(x)
-    return np.asarray(x)
+	img = image.load_img(path, target_size=(IH,IW))
+	x = image.img_to_array(img)
+	x = np.expand_dims(x, axis=0)
+	x = preprocess_input(x)
+	return np.asarray(x)
 
 def load_encoding_model():
 	model = vgg16.VGG16(weights='imagenet', include_top=True, input_shape = INPUT_SHAPE)
@@ -71,7 +71,7 @@ def prepare_dataset():
 
 	for img in train_images:
 		encoded_images[img] = get_encoding(encoding_model, img)
-		for capt in data[img]:			
+		for capt in data[img]:
 			capt = clean_caption(capt)
 			caption = "<start> "+capt+" <end>"
 			train_dataset_file.write(img+"\t"+caption+"\n")
@@ -87,7 +87,7 @@ def prepare_dataset():
 			test_dataset_file.flush()
 	test_dataset_file.close()
 	with open( "Flickr_Data/encoded_images.p", "wb" ) as pickle_f:
-		pickle.dump( encoded_images, pickle_f )  
+		pickle.dump( encoded_images, pickle_f )
 
 if __name__ == '__main__':
 	prepare_dataset()
