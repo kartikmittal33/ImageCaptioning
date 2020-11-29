@@ -1,94 +1,85 @@
-import cPickle as pickle
-from keras.preprocessing import image
-from keras.applications import vgg16
-import numpy as np 
-from keras.applications.imagenet_utils import preprocess_input
 import string
+from os import listdir
+from pickle import dump
+from keras.applications.vgg16 import VGG16
+from keras.preprocessing.image import load_img
+from keras.preprocessing.image import img_to_array
+from keras.applications.vgg16 import preprocess_input
+from keras.models import Model
+ 
+def load_doc(filename):
+	file = open(filename, 'r')
+	text = file.read()
+	file.close()
+	return text
+ 
+def load_descriptions(doc):
+	mapping = dict()
+	for line in doc.split('\n'):
+		tokens = line.split()
+		if len(line) < 2:
+			continue
+		image_id, image_desc = tokens[0], tokens[1:]
+		image_id = image_id.split('.')[0]
+		image_desc = ' '.join(image_desc)
+		if image_id not in mapping:
+			mapping[image_id] = list()
+		mapping[image_id].append(image_desc)
+	return mapping
+ 
+def clean_descriptions(descriptions):
+	table = string.maketrans('', '')
+	for key, desc_list in descriptions.items():
+		for i in range(len(desc_list)):
+			desc = desc_list[i]
+			desc = desc.split()
+			desc = [word.lower() for word in desc]
+			desc = [w.translate(table, string.punctuation) for w in desc]
+			desc = [word for word in desc if len(word)>1]
+			desc = [word for word in desc if word.isalpha()]
+			desc_list[i] =  ' '.join(desc)
+ 
+def to_vocabulary(descriptions):
+	all_desc = set()
+	for key in descriptions.keys():
+		[all_desc.update(d.split()) for d in descriptions[key]]
+	return all_desc
+ 
+def save_descriptions(descriptions, filename):
+	lines = list()
+	for key, desc_list in descriptions.items():
+		for desc in desc_list:
+			lines.append(key + ' ' + desc)
+	data = '\n'.join(lines)
+	file = open(filename, 'w')
+	file.write(data)
+	file.close()
 
-IH = 224
-IW = 224
-IZ = 3
+def extract_features(directory):
+	model = VGG16()
+	model = Model(inputs=model.inputs, outputs=model.layers[-2].output)
+	features = dict()
+	for name in listdir(directory):
+		filename = directory + '/' + name
+		image = load_img(filename, target_size=(224, 224))
+		image = img_to_array(image)
+		image = image.reshape((1, image.shape[0], image.shape[1], image.shape[2]))
+		image = preprocess_input(image)
+		feature = model.predict(image, verbose=0)
+		image_id = name.split('.')[0]
+		features[image_id] = feature
+	return features
+ 
+filename = 'Flickr_Data/Flickr_TextData/Flickr8k.token.txt'
+doc = load_doc(filename)
+descriptions = load_descriptions(doc)
+print('Loaded: %d ' % len(descriptions))
+clean_descriptions(descriptions)
+vocabulary = to_vocabulary(descriptions)
+print('Vocabulary Size: %d' % len(vocabulary))
+save_descriptions(descriptions, 'Flickr_Data/Flickr_TextData/clean-description.txt')
 
-INPUT_SHAPE = (IH, IW, IZ)
-
-def load_image(path):
-	img = image.load_img(path, target_size=(IH,IW))
-	x = image.img_to_array(img)
-	x = np.expand_dims(x, axis=0)
-	x = preprocess_input(x)
-	return np.asarray(x)
-
-def load_encoding_model():
-	model = vgg16.VGG16(weights='imagenet', include_top=True, input_shape = INPUT_SHAPE)
-	return model
-
-def get_encoding(model, img):
-	image = load_image('Flickr_Data/Flickr_Images/'+str(img))
-	pred = model.predict(image)
-	pred = np.reshape(pred, pred.shape[1])
-	return pred
-
-table = string.maketrans('', '')
-
-def clean_caption(capt):
-	global table
-	capt = capt.split()
-	capt = [word.lower() for word in capt]
-	capt = [w.translate(table, string.punctuation) for w in capt]
-	capt = [word for word in capt if len(word)>1]
-	capt = [word for word in capt if word.isalpha()]
-	capt =  ' '.join(capt)
-	return capt
-
-def prepare_dataset():
-	train_images_file = open('Flickr_Data/Flickr_TextData/Flickr_8k.trainImages.txt','rb')
-	train_images = train_images_file.read().strip().split('\n')
-
-	test_images_file = open('Flickr_Data/Flickr_TextData/Flickr_8k.testImages.txt','rb')
-	test_images = test_images_file.read().strip().split('\n')
-
-	test_images_file.close()
-	train_images_file.close()
-
-	# Saving files with corresponding captions
-	train_dataset_file = open('Flickr_Data/Flickr_Dataset/flickr_8k_train_dataset.txt','wb')
-	test_dataset_file = open('Flickr_Data/Flickr_Dataset/flickr_8k_test_dataset.txt','wb')
-
-	captions_file = open('Flickr_Data/Flickr_TextData/Flickr8k.token.txt', 'rb')
-	captions = captions_file.read().strip().split('\n')
-	data = {}
-	for caption_row in captions:
-		caption_row = caption_row.split("\t")
-		caption_row[0] = caption_row[0][:len(caption_row[0])-2]
-		try:
-			data[caption_row[0]].append(caption_row[1])
-		except:
-			data[caption_row[0]] = [caption_row[1]]
-	captions_file.close()
-
-	encoded_images = {}
-	encoding_model = load_encoding_model()
-
-	for img in train_images:
-		encoded_images[img] = get_encoding(encoding_model, img)
-		for capt in data[img]:
-			capt = clean_caption(capt)
-			caption = "<start> "+capt+" <end>"
-			train_dataset_file.write(img+"\t"+caption+"\n")
-			train_dataset_file.flush()
-	train_dataset_file.close()
-
-	for img in test_images:
-		encoded_images[img] = get_encoding(encoding_model, img)
-		for capt in data[img]:
-			capt = clean_caption(capt)
-			caption = "<start> "+capt+" <end>"
-			test_dataset_file.write(img+"\t"+caption+"\n")
-			test_dataset_file.flush()
-	test_dataset_file.close()
-	with open( "Flickr_Data/encoded_images.p", "wb" ) as pickle_f:
-		pickle.dump( encoded_images, pickle_f )
-
-if __name__ == '__main__':
-	prepare_dataset()
-	print('Preprocessing Complete!\n')
+directory = 'Flickr_Data/Flickr_Images'
+features = extract_features(directory)
+print('Extracted Features: %d' % len(features))
+dump(features, open('Flickr_Data/encoded_features.pkl', 'wb'))
