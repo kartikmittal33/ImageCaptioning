@@ -1,5 +1,2 @@
-Flickr_Data/Flickr_Dataset/*
-Flickr_Data/Flickr_Images/*
-Flickr_Data/Flickr_TextData/*
 .idea/
-Flickr_Data/encoded_images.p
+Flickr_Data/*

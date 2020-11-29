@@ -42,10 +42,10 @@ def create_tokenizer(descriptions):
 	tokenizer.fit_on_texts(lines)
 	return tokenizer
  
-filename = 'Flickr8k_text/Flickr_8k.trainImages.txt'
+filename = 'Flickr_Data/Flickr_TextData/Flickr_8k.trainImages.txt'
 train = load_set(filename)
 print('Dataset: %d' % len(train))
-train_descriptions = load_clean_descriptions('descriptions.txt', train)
+train_descriptions = load_clean_descriptions('Flickr_Data/Flickr_TextData/clean-description.txt', train)
 print('Descriptions: train=%d' % len(train_descriptions))
 tokenizer = create_tokenizer(train_descriptions)
-dump(tokenizer, open('tokenizer.pkl', 'wb'))
+dump(tokenizer, open('Flickr_Data/tokenizer.pkl', 'wb'))
