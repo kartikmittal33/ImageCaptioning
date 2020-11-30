@@ -68,6 +68,7 @@ def extract_features(directory):
 		feature = model.predict(image, verbose=0)
 		image_id = name.split('.')[0]
 		features[image_id] = feature
+		print('>%s' % name)
 	return features
  
 filename = 'Flickr_Data/Flickr_TextData/Flickr8k.token.txt'
