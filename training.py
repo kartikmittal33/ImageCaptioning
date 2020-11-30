@@ -3,7 +3,6 @@ from pickle import load
 from keras.preprocessing.text import Tokenizer
 from keras.preprocessing.sequence import pad_sequences
 from keras.utils import to_categorical
-from keras.utils import plot_model
 from keras.models import Model
 from keras.layers import Input
 from keras.layers import Dense
@@ -33,6 +32,8 @@ def load_clean_descriptions(filename, dataset):
 	doc = load_doc(filename)
 	descriptions = dict()
 	for line in doc.split('\n'):
+		if line == "":
+			break
 		tokens = line.split()
 		image_id, image_desc = tokens[0], tokens[1:]
 		if image_id in dataset:
@@ -90,7 +91,6 @@ def define_model(vocab_size, max_length):
 	model = Model(inputs=[inputs1, inputs2], outputs=outputs)
 	model.compile(loss='categorical_crossentropy', optimizer='adam')
 	model.summary()
-	plot_model(model, to_file='model.png', show_shapes=True)
 	return model
  
 def data_generator(descriptions, photos, tokenizer, max_length, vocab_size):
@@ -100,10 +100,10 @@ def data_generator(descriptions, photos, tokenizer, max_length, vocab_size):
 			in_img, in_seq, out_word = create_sequences(tokenizer, max_length, desc_list, photo, vocab_size)
 			yield [[in_img, in_seq], out_word]
  
-filename = 'Flickr_Data/Flickr_TextData/Flickr8k.token.txt'
+filename = 'Flickr_Data/Flickr_TextData/Flickr_8k.trainImages.txt'
 train = load_set(filename)
 print('Dataset: %d' % len(train))
-train_descriptions = load_clean_descriptions('Flickr_Data/Flickr_TextData/Flickr8k.token.txt', train)
+train_descriptions = load_clean_descriptions('Flickr_Data/Flickr_TextData/clean-description.txt', train)
 print('Descriptions: train=%d' % len(train_descriptions))
 train_features = load_photo_features('Flickr_Data/encoded_features.pkl', train)
 print('Photos: train=%d' % len(train_features))
@@ -119,4 +119,4 @@ steps = len(train_descriptions)
 for i in range(epochs):
 	generator = data_generator(train_descriptions, train_features, tokenizer, max_length, vocab_size)
 	model.fit_generator(generator, epochs=1, steps_per_epoch=steps, verbose=1)
-	model.save('model_' + str(i) + '.h5')
+	model.save('Flickr_Data/model_' + str(i) + '.h5')
