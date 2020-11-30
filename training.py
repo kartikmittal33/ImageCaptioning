@@ -10,7 +10,6 @@ from keras.layers import LSTM
 from keras.layers import Embedding
 from keras.layers import Dropout
 from keras.layers.merge import add
-from keras.callbacks import ModelCheckpoint
  
 def load_doc(filename):
 	file = open(filename, 'r')
@@ -114,7 +113,7 @@ max_length = max_length(train_descriptions)
 print('Description Length: %d' % max_length)
  
 model = define_model(vocab_size, max_length)
-epochs = 20
+epochs = 50
 steps = len(train_descriptions)
 for i in range(epochs):
 	generator = data_generator(train_descriptions, train_features, tokenizer, max_length, vocab_size)

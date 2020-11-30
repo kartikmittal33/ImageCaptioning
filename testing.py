@@ -139,6 +139,6 @@ print('Descriptions: test=%d' % len(test_descriptions))
 test_features = load_photo_features('Flickr_Data/encoded_features.pkl', test)
 print('Photos: test=%d' % len(test_features))
 
-filename = 'model-ep002-loss3.245-val_loss3.612.h5'
+filename = 'Flickr_Data/model_17.h5'
 model = load_model(filename)
 evaluate_model(model, test_descriptions, test_features, tokenizer, max_length)
