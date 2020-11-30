@@ -1,2 +1,5 @@
 .idea/
-Flickr_Data/*
+Flickr_Data/Flickr_Dataset/*
+Flickr_Data/Flickr_Images/*
+Flickr_Data/Flickr_TextData/*
+Flickr_Data/encoded_features.pkl
